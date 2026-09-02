@@ -4,13 +4,18 @@ export interface ConfigCategoria {
   valore: CategoriaMezzo;
   label: string;
   metrica: MetricaUso;
-  /** Campi specifici mostrati nel form per questa categoria. */
+  /** Nomi dei campi specifici (= colonne DB) mostrati nel form per questa categoria. */
   campiSpecifici: string[];
 }
 
 export const CATEGORIE: ConfigCategoria[] = [
   { valore: "auto", label: "Auto", metrica: "km", campiSpecifici: ["targa"] },
-  { valore: "jeep", label: "Jeep / fuoristrada", metrica: "km", campiSpecifici: ["targa"] },
+  {
+    valore: "jeep",
+    label: "Jeep / fuoristrada",
+    metrica: "km",
+    campiSpecifici: ["targa"],
+  },
   {
     valore: "scooter",
     label: "Motorino / scooter",
@@ -21,20 +26,25 @@ export const CATEGORIE: ConfigCategoria[] = [
     valore: "bicicletta",
     label: "Bicicletta",
     metrica: "km",
-    campiSpecifici: ["tipoBici"],
+    campiSpecifici: ["tipo_bici"],
   },
   {
     valore: "gommone",
     label: "Gommone",
     metrica: "ore",
-    campiSpecifici: ["numeroImmatricolazione", "marcaMotore", "potenzaMotore"],
+    campiSpecifici: ["numero_immatricolazione", "marca_motore", "potenza_motore"],
   },
-  { valore: "sci", label: "Sci", metrica: "nessuna", campiSpecifici: ["lunghezza"] },
+  {
+    valore: "sci",
+    label: "Sci",
+    metrica: "nessuna",
+    campiSpecifici: ["lunghezza"],
+  },
   {
     valore: "carrello",
     label: "Carrello rimorchio",
     metrica: "nessuna",
-    campiSpecifici: ["targa", "portataMassima"],
+    campiSpecifici: ["targa", "portata_massima"],
   },
 ];
 
@@ -43,3 +53,9 @@ export const CONFIG_PER_CATEGORIA: Record<CategoriaMezzo, ConfigCategoria> =
     CategoriaMezzo,
     ConfigCategoria
   >;
+
+export const METRICA_LABEL: Record<MetricaUso, string> = {
+  km: "chilometri",
+  ore: "ore motore",
+  nessuna: "nessuna metrica d'uso",
+};

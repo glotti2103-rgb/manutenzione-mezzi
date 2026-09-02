@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signOut } from "@/lib/supabase/auth-actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,17 +23,27 @@ export default async function Home() {
         </p>
 
         {user && (
-          <div className="mt-8 flex items-center gap-4 rounded-full border border-zinc-200 bg-white py-2 pl-4 pr-2 text-sm dark:border-zinc-800 dark:bg-zinc-950">
-            <span className="text-zinc-600 dark:text-zinc-400">{user.email}</span>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="rounded-full bg-black px-3 py-1.5 font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
-              >
-                Esci
-              </button>
-            </form>
-          </div>
+          <>
+            <Link
+              href="/mezzi"
+              className="mt-8 flex h-11 items-center rounded-lg bg-black px-6 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
+            >
+              I miei mezzi
+            </Link>
+            <div className="mt-4 flex items-center gap-4 rounded-full border border-zinc-200 bg-white py-2 pl-4 pr-2 text-sm dark:border-zinc-800 dark:bg-zinc-950">
+              <span className="text-zinc-600 dark:text-zinc-400">
+                {user.email}
+              </span>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className="rounded-full bg-black px-3 py-1.5 font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-black dark:hover:bg-zinc-200"
+                >
+                  Esci
+                </button>
+              </form>
+            </div>
+          </>
         )}
       </main>
     </div>

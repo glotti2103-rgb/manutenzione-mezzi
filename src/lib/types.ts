@@ -1,4 +1,5 @@
-// Modello dati di base — vedi requisiti.md
+// Modello dati — rispecchia lo schema del DB (colonne snake_case).
+// Vedi supabase/migrations/0001_init.sql e requisiti.md
 
 export type CategoriaMezzo =
   | "auto"
@@ -12,48 +13,53 @@ export type CategoriaMezzo =
 /** Metrica d'uso associata a una categoria di mezzo. */
 export type MetricaUso = "km" | "ore" | "nessuna";
 
-export interface Mezzo {
-  id: string;
-  /** Anche con un solo utente, i mezzi sono collegati a un utente (vedi requisiti.md). */
-  userId: string;
-  nome: string;
-  categoria: CategoriaMezzo;
-  marca?: string;
-  modello?: string;
-  anno?: number;
-  fotoUrl?: string;
-
-  // Campi specifici per categoria (solo quelli pertinenti vengono valorizzati)
-  targa?: string;
-  cilindrata?: number;
-  tipoBici?: "mtb" | "corsa" | "citta" | "ebike";
-  numeroImmatricolazione?: string;
-  marcaMotore?: string;
-  potenzaMotore?: number;
-  lunghezza?: number;
-  portataMassima?: number;
-}
+export type TipoBici = "mtb" | "corsa" | "citta" | "ebike";
 
 export type TipoScadenza = "data" | "uso";
 
-export interface Scadenza {
-  tipo: TipoScadenza;
-  /** ISO date, valorizzata se tipo === "data" */
-  data?: string;
-  /** km oppure ore motore, valorizzata se tipo === "uso" */
-  valoreUso?: number;
+export interface Mezzo {
+  id: string;
+  user_id: string;
+
+  // Campi comuni
+  nome: string;
+  categoria: CategoriaMezzo;
+  marca: string | null;
+  modello: string | null;
+  anno: number | null;
+  foto_url: string | null;
+
+  // Campi specifici per categoria (valorizzati solo quando pertinenti)
+  targa: string | null;
+  cilindrata: number | null;
+  tipo_bici: TipoBici | null;
+  numero_immatricolazione: string | null;
+  marca_motore: string | null;
+  potenza_motore: number | null;
+  lunghezza: number | null;
+  portata_massima: number | null;
+
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Intervento {
   id: string;
-  mezzoId: string;
-  userId: string;
+  mezzo_id: string;
+  user_id: string;
+
   data: string; // ISO date
   tipo: string; // testo libero
-  valoreUso?: number; // km o ore motore al momento dell'intervento
-  costo?: number;
-  officina?: string;
-  note?: string;
-  ricevutaUrl?: string;
-  prossimaScadenza?: Scadenza;
+  valore_uso: number | null; // km o ore motore al momento
+  costo: number | null;
+  officina: string | null;
+  note: string | null;
+  ricevuta_url: string | null;
+
+  prossima_scadenza_tipo: TipoScadenza | null;
+  prossima_scadenza_data: string | null;
+  prossima_scadenza_valore_uso: number | null;
+
+  created_at: string;
+  updated_at: string;
 }
