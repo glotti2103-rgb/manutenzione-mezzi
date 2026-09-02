@@ -108,6 +108,19 @@ export function InterventoForm({
         </span>
       </label>
 
+      <label className={labelClass}>
+        Foto ricevuta
+        <input
+          type="file"
+          name="ricevuta"
+          accept="image/*,application/pdf"
+          className="mt-1 block w-full text-sm text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-400 dark:file:bg-zinc-800 dark:file:text-zinc-200"
+        />
+        <span className="mt-1 block text-xs font-normal text-zinc-400">
+          Opzionale — immagine o PDF, max 10 MB
+        </span>
+      </label>
+
       <fieldset className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
         <legend className="px-1 text-sm font-medium text-zinc-500 dark:text-zinc-400">
           Prossima scadenza (opzionale)

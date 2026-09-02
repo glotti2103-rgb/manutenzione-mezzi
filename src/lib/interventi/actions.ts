@@ -18,6 +18,34 @@ function numeroNonNegativo(value: string): number | null {
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
+const MAX_RICEVUTA_BYTES = 10 * 1024 * 1024; // 10 MB
+const RICEVUTA_MIME_OK = /^(image\/|application\/pdf$)/;
+
+/** Carica la foto/PDF della ricevuta nel bucket privato e ritorna il path. */
+async function caricaRicevuta(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  file: File,
+): Promise<{ path: string } | { error: string }> {
+  if (file.size > MAX_RICEVUTA_BYTES) {
+    return { error: "La ricevuta supera i 10 MB." };
+  }
+  if (file.type && !RICEVUTA_MIME_OK.test(file.type)) {
+    return { error: "La ricevuta deve essere un'immagine o un PDF." };
+  }
+  const ext = file.name.includes(".")
+    ? file.name.split(".").pop()!.toLowerCase().replace(/[^a-z0-9]/g, "")
+    : file.type === "application/pdf"
+      ? "pdf"
+      : "jpg";
+  const path = `${userId}/${crypto.randomUUID()}.${ext || "bin"}`;
+  const { error } = await supabase.storage
+    .from("ricevute")
+    .upload(path, file, { contentType: file.type || undefined });
+  if (error) return { error: `Errore caricamento ricevuta: ${error.message}` };
+  return { path };
+}
+
 export async function createIntervento(
   _prev: InterventoFormState,
   formData: FormData,
@@ -93,6 +121,15 @@ export async function createIntervento(
     }
   }
 
+  // Foto ricevuta (opzionale).
+  let ricevuta_url: string | null = null;
+  const file = formData.get("ricevuta");
+  if (file instanceof File && file.size > 0) {
+    const esito = await caricaRicevuta(supabase, user.id, file);
+    if ("error" in esito) return { error: esito.error };
+    ricevuta_url = esito.path;
+  }
+
   const { error } = await supabase.from("interventi").insert({
     mezzo_id: mezzoId,
     user_id: user.id,
@@ -102,11 +139,17 @@ export async function createIntervento(
     costo,
     officina: testo(formData, "officina"),
     note: testo(formData, "note"),
+    ricevuta_url,
     prossima_scadenza_tipo,
     prossima_scadenza_data,
     prossima_scadenza_valore_uso,
   });
-  if (error) return { error: `Errore nel salvataggio: ${error.message}` };
+  if (error) {
+    if (ricevuta_url) {
+      await supabase.storage.from("ricevute").remove([ricevuta_url]);
+    }
+    return { error: `Errore nel salvataggio: ${error.message}` };
+  }
 
   revalidatePath(`/mezzi/${mezzoId}`);
   redirect(`/mezzi/${mezzoId}`);
@@ -123,11 +166,22 @@ export async function deleteIntervento(formData: FormData): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: row } = await supabase
+    .from("interventi")
+    .select("ricevuta_url")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
   await supabase
     .from("interventi")
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
+
+  if (row?.ricevuta_url) {
+    await supabase.storage.from("ricevute").remove([row.ricevuta_url]);
+  }
 
   revalidatePath(`/mezzi/${mezzoId}`);
 }

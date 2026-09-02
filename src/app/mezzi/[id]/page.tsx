@@ -48,6 +48,20 @@ export default async function MezzoDettaglioPage({
     .order("created_at", { ascending: false });
   const interventi = (interventiData ?? []) as Intervento[];
 
+  // URL firmati (bucket privato) per le ricevute allegate.
+  const ricevutaPaths = interventi
+    .map((i) => i.ricevuta_url)
+    .filter((p): p is string => !!p);
+  const ricevutaUrl = new Map<string, string>();
+  if (ricevutaPaths.length > 0) {
+    const { data: firmati } = await supabase.storage
+      .from("ricevute")
+      .createSignedUrls(ricevutaPaths, 60 * 60);
+    for (const f of firmati ?? []) {
+      if (f.path && f.signedUrl) ricevutaUrl.set(f.path, f.signedUrl);
+    }
+  }
+
   const config = CONFIG_PER_CATEGORIA[mezzo.categoria];
   const unita = UNITA_USO[config.metrica];
   const totale = interventi.reduce((somma, i) => somma + (i.costo ?? 0), 0);
@@ -182,6 +196,16 @@ export default async function MezzoDettaglioPage({
                     <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-600 dark:text-zinc-400">
                       {i.note}
                     </p>
+                  )}
+                  {i.ricevuta_url && ricevutaUrl.has(i.ricevuta_url) && (
+                    <a
+                      href={ricevutaUrl.get(i.ricevuta_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-black underline dark:text-zinc-50"
+                    >
+                      Ricevuta allegata
+                    </a>
                   )}
                   {scad && (
                     <p className="mt-2 w-fit rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200">
