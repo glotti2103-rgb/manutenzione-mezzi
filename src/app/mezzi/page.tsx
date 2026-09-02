@@ -43,13 +43,21 @@ export default async function MezziPage() {
                   {CONFIG_PER_CATEGORIA[m.categoria].label}
                 </span>
                 <h2 className="mt-2 text-lg font-semibold text-black dark:text-zinc-50">
-                  {m.nome}
+                  <Link href={`/mezzi/${m.id}`} className="hover:underline">
+                    {m.nome}
+                  </Link>
                 </h2>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   {marcaModello || "—"}
                   {m.anno ? ` · ${m.anno}` : ""}
                 </p>
                 <div className="mt-4 flex items-center gap-4 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+                  <Link
+                    href={`/mezzi/${m.id}`}
+                    className="text-sm font-medium text-black hover:underline dark:text-zinc-50"
+                  >
+                    Dettaglio
+                  </Link>
                   <Link
                     href={`/mezzi/${m.id}/modifica`}
                     className="text-sm font-medium text-black hover:underline dark:text-zinc-50"
