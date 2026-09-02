@@ -86,19 +86,13 @@ export function InterventoForm({
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className={labelClass}>
-          Officina / fornitore
-          <input
-            type="text"
-            name="officina"
-            className={fieldClass}
-          />
-          <span className="mt-1 block text-xs font-normal text-zinc-400">
-            Opzionale
-          </span>
-        </label>
-      </div>
+      <label className={labelClass}>
+        Officina / fornitore
+        <input type="text" name="officina" className={fieldClass} />
+        <span className="mt-1 block text-xs font-normal text-zinc-400">
+          Opzionale
+        </span>
+      </label>
 
       <label className={labelClass}>
         Note

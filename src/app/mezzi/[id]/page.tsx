@@ -2,10 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InterventoForm } from "@/components/intervento-form";
 import { DeleteInterventoButton } from "@/components/delete-intervento-button";
-import {
-  CONFIG_PER_CATEGORIA,
-  UNITA_USO,
-} from "@/lib/categorie";
+import { EmptyState } from "@/components/empty-state";
+import { ErrorNotice } from "@/components/error-notice";
+import { CONFIG_PER_CATEGORIA, UNITA_USO } from "@/lib/categorie";
 import { CAMPI_SPECIFICI } from "@/lib/mezzi/campi";
 import { formatData, formatEuro, formatNumero } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -32,15 +31,16 @@ export default async function MezzoDettaglioPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: mezzoData } = await supabase
+  const { data: mezzoData, error: mezzoError } = await supabase
     .from("mezzi")
     .select("*")
     .eq("id", id)
     .maybeSingle();
+  if (mezzoError) throw new Error(mezzoError.message);
   if (!mezzoData) notFound();
   const mezzo = mezzoData as Mezzo;
 
-  const { data: interventiData } = await supabase
+  const { data: interventiData, error: interventiError } = await supabase
     .from("interventi")
     .select("*")
     .eq("mezzo_id", id)
@@ -91,23 +91,23 @@ export default async function MezzoDettaglioPage({
       </Link>
 
       {/* Intestazione mezzo */}
-      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-4 sm:p-6 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
               {config.label}
             </span>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+            <h1 className="mt-2 break-words text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
               {mezzo.nome}
             </h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="break-words text-sm text-zinc-500 dark:text-zinc-400">
               {marcaModello || "—"}
               {mezzo.anno ? ` · ${mezzo.anno}` : ""}
             </p>
           </div>
           <Link
             href={`/mezzi/${mezzo.id}/modifica`}
-            className="text-sm font-medium text-black hover:underline dark:text-zinc-50"
+            className="inline-flex h-9 shrink-0 items-center rounded-lg border border-zinc-300 px-3 text-sm font-medium text-black transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-50 dark:hover:bg-zinc-800"
           >
             Modifica
           </Link>
@@ -118,7 +118,9 @@ export default async function MezzoDettaglioPage({
             {dettagliSpecifici.map((d) => (
               <div key={d.label} className="flex justify-between gap-4">
                 <dt className="text-zinc-500 dark:text-zinc-400">{d.label}</dt>
-                <dd className="text-black dark:text-zinc-50">{d.valore}</dd>
+                <dd className="break-words text-right text-black dark:text-zinc-50">
+                  {d.valore}
+                </dd>
               </div>
             ))}
           </dl>
@@ -126,7 +128,7 @@ export default async function MezzoDettaglioPage({
       </section>
 
       {/* Totale speso */}
-      <section className="mt-4 flex items-baseline justify-between rounded-xl border border-zinc-200 bg-white px-6 py-4 dark:border-zinc-800 dark:bg-zinc-950">
+      <section className="mt-4 flex items-baseline justify-between gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-4 sm:px-6 dark:border-zinc-800 dark:bg-zinc-950">
         <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
           Totale speso
         </span>
@@ -140,7 +142,7 @@ export default async function MezzoDettaglioPage({
         <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
           Registra intervento
         </h2>
-        <div className="mt-3 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="mt-3 rounded-xl border border-zinc-200 bg-white p-4 sm:p-6 dark:border-zinc-800 dark:bg-zinc-950">
           <InterventoForm mezzoId={mezzo.id} categoria={mezzo.categoria} />
         </div>
       </section>
@@ -149,74 +151,81 @@ export default async function MezzoDettaglioPage({
       <section className="mt-8">
         <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
           Storico interventi
-          <span className="ml-2 text-sm font-normal text-zinc-400">
-            {interventi.length}
-          </span>
+          {interventi.length > 0 && (
+            <span className="ml-2 text-sm font-normal text-zinc-400">
+              {interventi.length}
+            </span>
+          )}
         </h2>
 
-        {interventi.length === 0 ? (
-          <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
-            Nessun intervento registrato per questo mezzo.
-          </p>
-        ) : (
-          <ol className="mt-3 flex flex-col gap-3">
-            {interventi.map((i) => {
-              const scad = scadenzaLabel(i, unita);
-              return (
-                <li
-                  key={i.id}
-                  className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-black dark:text-zinc-50">
-                        {i.tipo}
-                      </p>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                        {formatData(i.data)}
-                        {i.valore_uso != null
-                          ? ` · ${formatNumero(i.valore_uso)} ${unita}`
-                          : ""}
-                        {i.officina ? ` · ${i.officina}` : ""}
-                      </p>
+        <div className="mt-3">
+          {interventiError ? (
+            <ErrorNotice description="Impossibile caricare lo storico degli interventi." />
+          ) : interventi.length === 0 ? (
+            <EmptyState
+              title="Nessun intervento registrato"
+              description="Usa il modulo qui sopra per registrare il primo intervento di questo mezzo."
+            />
+          ) : (
+            <ol className="flex flex-col gap-3">
+              {interventi.map((i) => {
+                const scad = scadenzaLabel(i, unita);
+                return (
+                  <li
+                    key={i.id}
+                    className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="break-words font-medium text-black dark:text-zinc-50">
+                          {i.tipo}
+                        </p>
+                        <p className="break-words text-sm text-zinc-500 dark:text-zinc-400">
+                          {formatData(i.data)}
+                          {i.valore_uso != null
+                            ? ` · ${formatNumero(i.valore_uso)} ${unita}`
+                            : ""}
+                          {i.officina ? ` · ${i.officina}` : ""}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="font-semibold text-black tabular-nums dark:text-zinc-50">
+                          {formatEuro(i.costo ?? 0)}
+                        </span>
+                        <DeleteInterventoButton
+                          id={i.id}
+                          mezzoId={mezzo.id}
+                          descrizione={`${i.tipo} del ${formatData(i.data)}`}
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="font-semibold text-black tabular-nums dark:text-zinc-50">
-                        {formatEuro(i.costo ?? 0)}
-                      </span>
-                      <DeleteInterventoButton
-                        id={i.id}
-                        mezzoId={mezzo.id}
-                        descrizione={`${i.tipo} del ${formatData(i.data)}`}
-                      />
-                    </div>
-                  </div>
 
-                  {i.note && (
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-600 dark:text-zinc-400">
-                      {i.note}
-                    </p>
-                  )}
-                  {i.ricevuta_url && ricevutaUrl.has(i.ricevuta_url) && (
-                    <a
-                      href={ricevutaUrl.get(i.ricevuta_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-black underline dark:text-zinc-50"
-                    >
-                      Ricevuta allegata
-                    </a>
-                  )}
-                  {scad && (
-                    <p className="mt-2 w-fit rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                      {scad}
-                    </p>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        )}
+                    {i.note && (
+                      <p className="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-600 dark:text-zinc-400">
+                        {i.note}
+                      </p>
+                    )}
+                    {i.ricevuta_url && ricevutaUrl.has(i.ricevuta_url) && (
+                      <a
+                        href={ricevutaUrl.get(i.ricevuta_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-black underline dark:text-zinc-50"
+                      >
+                        Ricevuta allegata
+                      </a>
+                    )}
+                    {scad && (
+                      <p className="mt-2 w-fit rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                        {scad}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
       </section>
     </>
   );

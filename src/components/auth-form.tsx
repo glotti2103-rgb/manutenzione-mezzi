@@ -21,7 +21,7 @@ export function AuthForm({ mode, action, notice }: Props) {
   const isLogin = mode === "login";
 
   return (
-    <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8 dark:border-zinc-800 dark:bg-zinc-950">
       <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
         {isLogin ? "Accedi" : "Crea un account"}
       </h1>
